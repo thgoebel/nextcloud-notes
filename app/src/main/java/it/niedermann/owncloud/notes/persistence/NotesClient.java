@@ -3,6 +3,8 @@ package it.niedermann.owncloud.notes.persistence;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.WorkerThread;
+
 import com.google.gson.GsonBuilder;
 import com.nextcloud.android.sso.aidl.NextcloudRequest;
 import com.nextcloud.android.sso.api.AidlNetworkRequest;
@@ -26,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import androidx.annotation.WorkerThread;
 import it.niedermann.owncloud.notes.model.CloudNote;
 import it.niedermann.owncloud.notes.util.ServerResponse.NoteResponse;
 import it.niedermann.owncloud.notes.util.ServerResponse.NotesResponse;
@@ -77,6 +78,7 @@ public class NotesClient {
 
     private static final String HEADER_VALUE_APPLICATION_JSON = "application/json";
 
+    private static final String METHOD_HEAD = "HEAD";
     private static final String METHOD_GET = "GET";
     private static final String METHOD_PUT = "PUT";
     private static final String METHOD_POST = "POST";
@@ -121,7 +123,7 @@ public class NotesClient {
     NotesResponse getNotes(long lastModified, String lastETag) throws NextcloudHttpRequestFailedException {
         Map<String, String> parameter = new HashMap<>();
         parameter.put(GET_PARAM_KEY_PRUNE_BEFORE, Long.toString(lastModified));
-        return new NotesResponse(requestServer("notes", METHOD_GET, parameter, null, lastETag));
+        return new NotesResponse(requestServer(API_PATH + "notes", METHOD_GET, parameter, null, lastETag));
     }
 
     private NoteResponse putNote(CloudNote note, String path, String method) throws JSONException, NextcloudHttpRequestFailedException {
@@ -130,7 +132,7 @@ public class NotesClient {
         paramObject.accumulate(JSON_MODIFIED, note.getModified().getTimeInMillis() / 1000);
         paramObject.accumulate(JSON_FAVORITE, note.isFavorite());
         paramObject.accumulate(JSON_CATEGORY, note.getCategory());
-        return new NoteResponse(requestServer(path, method, null, paramObject, null));
+        return new NoteResponse(requestServer(API_PATH + path, method, null, paramObject, null));
     }
 
     /**
@@ -151,10 +153,14 @@ public class NotesClient {
 
     void deleteNote(long noteId) {
         try {
-            this.requestServer("notes/" + noteId, METHOD_DELETE, null, null, null);
+            this.requestServer(API_PATH + "notes/" + noteId, METHOD_DELETE, null, null, null);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    String getAvatarEtag(String userName) throws NextcloudHttpRequestFailedException {
+        return requestServer("/index.php/avatar/" + userName + "/64?v=2", METHOD_HEAD, null, null, null).getETag();
     }
 
     /**
@@ -170,7 +176,7 @@ public class NotesClient {
     private ResponseData requestServer(String target, String method, Map<String, String> parameter, JSONObject requestBody, String lastETag) throws NextcloudHttpRequestFailedException {
         NextcloudRequest.Builder requestBuilder = new NextcloudRequest.Builder()
                 .setMethod(method)
-                .setUrl(API_PATH + target);
+                .setUrl(target);
         if(parameter != null) {
             requestBuilder.setParameter(parameter);
         }

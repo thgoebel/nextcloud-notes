@@ -43,6 +43,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.nextcloud.android.sso.AccountImporter;
@@ -294,8 +295,9 @@ public class NotesListViewActivity extends AppCompatActivity implements ItemAdap
                     .with(this)
                     .load(account.getUrl() + "/index.php/avatar/" + Uri.encode(account.getUserName()) + "/64")
                     .error(R.drawable.ic_account_circle_grey_24dp)
+                    .signature(new ObjectKey(account.getAvatarEtag() + ""))
                     .apply(RequestOptions.circleCropTransform())
-                    .into(((ImageView) v.findViewById(R.id.accountItemAvatar)));
+                    .into((ImageView) v.findViewById(R.id.accountItemAvatar));
             v.setOnClickListener(clickedView -> {
                 clickHeader();
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -352,6 +354,7 @@ public class NotesListViewActivity extends AppCompatActivity implements ItemAdap
         swipeRefreshLayout.setOnRefreshListener(() -> {
             if (db.getNoteServerSyncHelper().isSyncPossible()) {
                 synchronize();
+                db.getNoteServerSyncHelper().updateAvatar();
             } else {
                 swipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(getApplicationContext(), getString(R.string.error_sync, getString(LoginStatus.NO_NETWORK.str)), Toast.LENGTH_LONG).show();
@@ -805,6 +808,7 @@ public class NotesListViewActivity extends AppCompatActivity implements ItemAdap
                         .with(this)
                         .load(url + "/index.php/avatar/" + Uri.encode(localAccount.getUserName()) + "/64")
                         .error(R.mipmap.ic_launcher)
+                        .signature(new ObjectKey(localAccount.getAvatarEtag() + ""))
                         .apply(RequestOptions.circleCropTransform())
                         .into(this.currentAccountImage);
             } else {

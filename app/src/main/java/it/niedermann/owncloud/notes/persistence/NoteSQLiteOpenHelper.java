@@ -50,7 +50,7 @@ public class NoteSQLiteOpenHelper extends SQLiteOpenHelper {
 
     private static final String TAG = NoteSQLiteOpenHelper.class.getSimpleName();
 
-    private static final int database_version = 9;
+    private static final int database_version = 10;
     private static final String database_name = "OWNCLOUD_NOTES";
     private static final String table_notes = "NOTES";
     private static final String table_accounts = "ACCOUNTS";
@@ -61,6 +61,7 @@ public class NoteSQLiteOpenHelper extends SQLiteOpenHelper {
     private static final String key_url = "URL";
     private static final String key_account_name = "ACCOUNT_NAME";
     private static final String key_username = "USERNAME";
+    private static final String key_avatar_etag = "AVATAR_ETAG";
 
     private static final String key_status = "STATUS";
     private static final String key_title = "TITLE";
@@ -238,6 +239,10 @@ public class NoteSQLiteOpenHelper extends SQLiteOpenHelper {
                 Log.e(TAG, "Previous URL is null. Recreating database...");
                 recreateDatabase(db);
             }
+        }
+        if(oldVersion < 10) {
+            db.execSQL("ALTER TABLE " + table_accounts + " ADD COLUMN " + key_avatar_etag + " String");
+            DatabaseIndexUtil.createIndex(db, table_accounts, key_avatar_etag);
         }
     }
 
@@ -830,6 +835,19 @@ public class NoteSQLiteOpenHelper extends SQLiteOpenHelper {
     private static void validateAccountId(long accountId) {
         if(accountId < 1) {
             throw new IllegalArgumentException("accountId must be greater than 0");
+        }
+    }
+
+    void updateAvatarETag(long accountId, String etag) {
+        validateAccountId(accountId);
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(key_avatar_etag, etag);
+        final int updatedRows = db.update(table_accounts, values, key_id + " = ?", new String[]{accountId + ""});
+        if (updatedRows == 1) {
+            Log.v(TAG, "Updated etag to " + etag + " for accountId = " + accountId);
+        } else {
+            Log.e(TAG, "Updated " + updatedRows + " but expected only 1 for accountId = " + accountId + " and etag = " + etag);
         }
     }
 }

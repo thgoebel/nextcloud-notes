@@ -134,6 +134,16 @@ public class NoteServerSyncHelper {
         Log.v(TAG, "Reinstanziation NotesClient because of SSO acc changed");
     }
 
+    public void updateAvatar() {
+        new Thread(() -> {
+            try {
+                dbHelper.updateAvatarETag(localAccount.getId(), notesClient.getAvatarEtag(localAccount.getUserName()));
+            } catch (NextcloudHttpRequestFailedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     @Override
     protected void finalize() throws Throwable {
         appContext.unregisterReceiver(networkReceiver);
@@ -327,7 +337,7 @@ public class NoteServerSyncHelper {
                     Log.e(TAG, "Exception", e);
                     exceptions.add(e);
                 } catch (NextcloudHttpRequestFailedException e) {
-                    if(e.getStatusCode() == 304) {
+                    if (e.getStatusCode() == 304) {
                         Log.d(TAG, "Server returned HTTP Status Code 304 - Not Modified");
                     } else {
                         e.printStackTrace();
@@ -384,7 +394,7 @@ public class NoteServerSyncHelper {
                 exceptions.add(e);
                 status = LoginStatus.JSON_FAILED;
             } catch (NextcloudHttpRequestFailedException e) {
-                if(e.getStatusCode() == 304) {
+                if (e.getStatusCode() == 304) {
                     Log.d(TAG, "Server returned HTTP Status Code 304 - Not Modified");
                     return LoginStatus.OK;
                 } else {

@@ -8,6 +8,7 @@ public class LocalAccount {
     private String url;
     private String etag;
     private long modified;
+    private String avatar_etag;
 
     public long getId() {
         return id;
@@ -57,6 +58,14 @@ public class LocalAccount {
         this.modified = modified;
     }
 
+    public String getAvatarEtag() {
+        return avatar_etag;
+    }
+
+    public void setAvatarEtag(String avatar_etag) {
+        this.avatar_etag = avatar_etag;
+    }
+
     @Override
     public String toString() {
         return "LocalAccount{" +
@@ -66,6 +75,7 @@ public class LocalAccount {
                 ", url='" + url + '\'' +
                 ", etag='" + etag + '\'' +
                 ", modified='" + modified + '\'' +
+                ", avatar_etag='" + avatar_etag + '\'' +
                 '}';
     }
 }
